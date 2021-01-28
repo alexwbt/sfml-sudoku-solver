@@ -21,8 +21,18 @@ class Sudoku
 private:
     Cell grid_[kSize][kSize];
 
+    // render
+    float x_, y_, size_;
+    float line_width_ = 1;
+    float border_width_ = 2;
+    sf::Color line_color_ = sf::Color(150, 150, 150);
+    sf::Color border_color_ = sf::Color(50, 50, 50);
+    sf::Font font_;
+    sf::Color font_color_ = sf::Color::Black;
+    sf::Color note_color_ = sf::Color(150, 150, 150);
+
 public:
-    Sudoku();
+    Sudoku(float x, float y, float size);
 
     Cell& Get(int x, int y);
 
@@ -34,40 +44,3 @@ public:
 
     void Render(sf::RenderTarget& target);
 };
-
-void Solve(Sudoku& sudoku)
-{
-    while (true)
-    {
-        auto map = [&](int x, int y, Cell& cell)
-        {
-            // note posible numbers
-            int noted_count = 0;
-            for (int i = 0; i < kSize; i++)
-            {
-                bool note = true;
-                uint8_t test_number = i + 1;
-
-                // test if number exists
-                auto test = [&](int, int, Cell& test_c)
-                {
-                    if (test_c.value == test_number)
-                        note = false;
-                    return !note;
-                };
-                sudoku.MapBlock(x, y, test);
-                sudoku.MapLineX(y, test);
-                sudoku.MapLineY(x, test);
-
-                if (note)
-                {
-                    cell.note[i] = true;
-                    noted_count++;
-                }
-            }
-
-            return false;
-        };
-        sudoku.Map(map);
-    }
-}
