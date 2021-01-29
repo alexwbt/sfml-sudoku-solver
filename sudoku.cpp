@@ -20,12 +20,35 @@ Cell& Sudoku::Get(int x, int y)
     return grid_[x][y];
 }
 
+void Sudoku::Clear()
+{
+    for (int x = 0; x < kSize; x++)
+    {
+        for (int y = 0; y < kSize; y++)
+        {
+            grid_[x][y].value = 0;
+            grid_[x][y].is_static = false;
+            for (int i = 0; i < kNumCount; i++)
+                grid_[x][y].note[i] = false;
+        }
+    }
+    rerender_ = true;
+}
+
 void Sudoku::SetSelect(uint8_t value)
 {
     if (select_x_ >= 0 && select_x_ < kSize &&
         select_y_ >= 0 && select_y_ < kSize)
     {
-        grid_[select_x_][select_y_].value = value;
+        if (!grid_[select_x_][select_y_].is_static || value == 0)
+        {
+            grid_[select_x_][select_y_].value = value;
+            grid_[select_x_][select_y_].is_static = false;
+        }
+
+        for (int i = 0; i < kNumCount; i++)
+            grid_[select_x_][select_y_].note[i] = false;
+
         rerender_ = true;
     }
 }
@@ -119,7 +142,6 @@ void Sudoku::Render(sf::RenderTarget& target)
 
     sf::Text number;
     number.setFont(font_);
-    number.setFillColor(font_color_);
     number.setCharacterSize(unsigned int(cell_size * 0.8f));
 
     sf::Text note;
@@ -131,6 +153,9 @@ void Sudoku::Render(sf::RenderTarget& target)
     {
         if (cell.value > 0)
         {
+            if (cell.is_static)
+                number.setFillColor(static_color_);
+            else number.setFillColor(font_color_);
             number.setString(std::to_string(cell.value));
             number.setPosition(x_ + (x + 0.1f) * cell_size, y_ + (y + 0.05f) * cell_size);
             target.draw(number);

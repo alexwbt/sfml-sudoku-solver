@@ -31,7 +31,8 @@ private:
     sf::Color line_color_ = sf::Color(150, 150, 150);
     sf::Color border_color_ = sf::Color(50, 50, 50);
     sf::Font font_;
-    sf::Color font_color_ = sf::Color::Black;
+    sf::Color static_color_ = sf::Color::Black;
+    sf::Color font_color_ = sf::Color(100, 100, 255);
     sf::Color note_color_ = sf::Color(150, 150, 150);
 
 public:
@@ -41,6 +42,7 @@ public:
 
     Cell& Get(int x, int y);
 
+    void Clear();
     void SetSelect(uint8_t value);
     void MoveSelect(int x, int y);
 
