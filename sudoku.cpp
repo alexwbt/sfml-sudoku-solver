@@ -20,6 +20,23 @@ Cell& Sudoku::Get(int x, int y)
     return grid_[x][y];
 }
 
+void Sudoku::SetSelect(uint8_t value)
+{
+    if (select_x_ >= 0 && select_x_ < kSize &&
+        select_y_ >= 0 && select_y_ < kSize)
+    {
+        grid_[select_x_][select_y_].value = value;
+        rerender_ = true;
+    }
+}
+
+void Sudoku::MoveSelect(int x, int y)
+{
+    select_x_ = std::max(0, std::min(kSize - 1, select_x_ + x));
+    select_y_ = std::max(0, std::min(kSize - 1, select_y_ + y));
+    rerender_ = true;
+}
+
 void Sudoku::Map(std::function<bool(int, int, Cell&)> callback)
 {
     for (int x = 0; x < kSize; x++)
@@ -30,8 +47,9 @@ void Sudoku::Map(std::function<bool(int, int, Cell&)> callback)
 
 void Sudoku::MapBlock(int cx, int cy, std::function<bool(int, int, Cell&)> callback)
 {
-    int sx = cx / kBlockSize;
-    int sy = cy / kBlockSize;
+    rerender_ = true;
+    int sx = (cx / kBlockSize) * kBlockSize;
+    int sy = (cy / kBlockSize) * kBlockSize;
     for (int x = sx; x < sx + kBlockSize; x++)
         for (int y = sy; y < sy + kBlockSize; y++)
             if (callback(x, y, grid_[x][y]))
@@ -40,6 +58,7 @@ void Sudoku::MapBlock(int cx, int cy, std::function<bool(int, int, Cell&)> callb
 
 void Sudoku::MapLineX(int y, std::function<bool(int, int, Cell&)> callback)
 {
+    rerender_ = true;
     for (int x = 0; x < kSize; x++)
         if (callback(x, y, grid_[x][y]))
             return;
@@ -47,6 +66,7 @@ void Sudoku::MapLineX(int y, std::function<bool(int, int, Cell&)> callback)
 
 void Sudoku::MapLineY(int x, std::function<bool(int, int, Cell&)> callback)
 {
+    rerender_ = true;
     for (int y = 0; y < kSize; y++)
         if (callback(x, y, grid_[x][y]))
             return;
@@ -54,7 +74,18 @@ void Sudoku::MapLineY(int x, std::function<bool(int, int, Cell&)> callback)
 
 void Sudoku::Render(sf::RenderTarget& target)
 {
+    rerender_ = false;
+
     float cell_size = size_ / (float)kSize;
+
+    if (select_x_ >= 0 && select_x_ < kSize &&
+        select_y_ >= 0 && select_y_ < kSize)
+    {
+        sf::RectangleShape rect(sf::Vector2f(cell_size, cell_size));
+        rect.setFillColor(sf::Color(0, 0, 50, 50));
+        rect.setPosition(x_ + select_x_ * cell_size, y_ + select_y_ * cell_size);
+        target.draw(rect);
+    }
 
     sf::RectangleShape line_v(sf::Vector2f(line_width_, size_));
     line_v.setFillColor(line_color_);
@@ -89,13 +120,13 @@ void Sudoku::Render(sf::RenderTarget& target)
     sf::Text number;
     number.setFont(font_);
     number.setFillColor(font_color_);
-    number.setCharacterSize(cell_size * 0.8f);
+    number.setCharacterSize(unsigned int(cell_size * 0.8f));
 
     sf::Text note;
     note.setFont(font_);
     note.setFillColor(note_color_);
-    note.setCharacterSize(cell_size * 0.28f);
-    
+    note.setCharacterSize(unsigned int(cell_size * 0.28f));
+
     auto map = [&](int x, int y, Cell& cell)
     {
         if (cell.value > 0)

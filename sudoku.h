@@ -21,7 +21,10 @@ class Sudoku
 private:
     Cell grid_[kSize][kSize];
 
+    int select_x_ = -1, select_y_ = -1;
+
     // render
+    bool rerender_ = true;
     float x_, y_, size_;
     float line_width_ = 1;
     float border_width_ = 2;
@@ -34,7 +37,12 @@ private:
 public:
     Sudoku(float x, float y, float size);
 
+    bool rerender() const { return rerender_; }
+
     Cell& Get(int x, int y);
+
+    void SetSelect(uint8_t value);
+    void MoveSelect(int x, int y);
 
     // return true to break
     void Map(std::function<bool(int, int, Cell&)>);
