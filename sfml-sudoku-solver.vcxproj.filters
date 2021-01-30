@@ -16,9 +16,15 @@
     <ClCompile Include="sudoku.cpp">
       <Filter>src\sudoku</Filter>
     </ClCompile>
+    <ClCompile Include="solver.cpp">
+      <Filter>src\sudoku</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sudoku.h">
+      <Filter>src\sudoku</Filter>
+    </ClInclude>
+    <ClInclude Include="solver.h">
       <Filter>src\sudoku</Filter>
     </ClInclude>
   </ItemGroup>
