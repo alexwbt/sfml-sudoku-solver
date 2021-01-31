@@ -1,6 +1,10 @@
 
 #include "sudoku.h"
 
+#include <iostream>
+#include <list>
+#include <set>
+
 bool GuessNumber(Sudoku& sudoku, int x, int y, Cell& cell)
 {
     return false;
@@ -54,7 +58,7 @@ void Solve(Sudoku& sudoku)
         sudoku.MapLineY(x, remove_note);
     };
 
-    int loop_count = 0;
+    // level 1
     while (true)
     {
         bool set_value = false;
@@ -114,7 +118,72 @@ void Solve(Sudoku& sudoku)
         };
         sudoku.Map(find_only_possibility);
 
-        if (!set_value || loop_count > 0) loop_count++;
-        if (loop_count > 10) break;
+        if (!set_value) break;
+    }
+
+    // level 2
+    struct CellCoord { int x, y; Cell* cell; };
+    std::list<CellCoord> cells;
+    std::set<int> notes;
+    bool found = false;
+    auto multi_contain_test = [&](std::function<void(const CellCoord&)> update_note, int x, int y, Cell& cell)
+    {
+        if (cell.value > 0) return false;
+
+        if (cells.size() < 3) // doesn't work
+            cells.push_back({ x, y, &cell });
+        else cells.pop_front();
+
+        if (cells.size() < 2) return false;
+
+        notes.clear();
+        for (auto c : cells)
+            for (int i = 0; i < kNumCount; i++)
+                if (c.cell->note[i])
+                    notes.insert(i);
+
+        if (notes.size() == cells.size())
+        {
+            for (const auto& c : cells)
+                update_note(c);
+            cells.clear();
+            found = true;
+        }
+        return false;
+    };
+    auto mct_update = [&](int x, int y, Cell& cell)
+    {
+        for (const auto& nc : cells)
+            if (nc.x == x && nc.y == y)
+                return false;
+        for (int i : notes)
+            cell.note[i] = false;
+        return false;
+    };
+    auto mct_map_block = std::bind<bool>(multi_contain_test, [&](const CellCoord& c)
+        { sudoku.MapBlock(c.x, c.y, mct_update); }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto mct_map_x = std::bind<bool>(multi_contain_test, [&](const CellCoord& c)
+        { sudoku.MapLineX(c.y, mct_update); }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto mct_map_y = std::bind<bool>(multi_contain_test, [&](const CellCoord& c)
+        { sudoku.MapLineY(c.x, mct_update); }, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    while (true)
+    {
+        found = false;
+        auto map = [&](int x, int y, Cell& cell)
+        {
+            cells.clear();
+            notes.clear();
+            sudoku.MapBlock(x, y, mct_map_block);
+            cells.clear();
+            notes.clear();
+            sudoku.MapLineX(y, mct_map_x);
+            cells.clear();
+            notes.clear();
+            sudoku.MapLineY(x, mct_map_y);
+            return false;
+        };
+        sudoku.Map(map);
+
+        if (!found) break;
     }
 }
