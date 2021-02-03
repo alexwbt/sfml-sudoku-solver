@@ -53,8 +53,8 @@ void Solve(Sudoku& sudoku)
     };
     sudoku.Map(note_possible_numbers);
 
-    // level 1
-    bool set_value = true;
+    // part 1
+    bool part_1 = true;
     auto set_value_and_update_note = [&](int x, int y, Cell& cell, int note)
     {
         cell.value = note + 1;
@@ -89,7 +89,7 @@ void Solve(Sudoku& sudoku)
         if (note_count == 1)
         {
             set_value_and_update_note(x, y, cell, note);
-            set_value = true;
+            part_1 = true;
             return false;
         }
 
@@ -120,16 +120,16 @@ void Solve(Sudoku& sudoku)
             if (only)
             {
                 set_value_and_update_note(x, y, cell, i);
-                set_value = true;
+                part_1 = true;
             }
         }
         return false;
     };
 
-    // level 2
+    // part 2
     struct CellCoord { int x, y; Cell& cell; };
     std::vector<CellCoord> check_list;
-    bool removed_note = true;
+    bool part_2 = true;
     auto add_to_list = [&](int x, int y, Cell& cell)
     {
         if (cell.value == 0)
@@ -154,7 +154,7 @@ void Solve(Sudoku& sudoku)
                 for (int i : notes)
                 {
                     if (cell.note[i])
-                        removed_note = true;
+                        part_2 = true;
                     cell.note[i] = false;
                 }
                 return false;
@@ -163,25 +163,31 @@ void Solve(Sudoku& sudoku)
         }
     };
 
+    // part 3
+
+    int level = 0;
     bool running = true;
     while (running)
     {
-        // level 1
-        set_value = true;
-        while (set_value)
+        int counter = 0;
+
+        // part 1
+        part_1 = true;
+        while (part_1)
         {
-            set_value = false;
+            part_1 = false;
             sudoku.Map(find_only_possibility);
 
-            if (!set_value && !removed_note)
-                running = false;
+            if (part_1) counter++;
         }
 
-        // level 2
-        removed_note = true;
-        while (removed_note)
+        // part 2
+        sudoku.Map(add_to_list);
+        part_2 = !check_list.empty();
+        check_list.clear();
+        while (part_2)
         {
-            removed_note = false;
+            part_2 = false;
 
             // blocks
             for (int x = 0; x < 3; x++)
@@ -190,8 +196,9 @@ void Solve(Sudoku& sudoku)
                 {
                     auto map = std::bind(&Sudoku::MapBlock, &sudoku, x * 3, y * 3, std::placeholders::_1);
                     map(add_to_list);
-                    for (int i = 2; i < check_list.size() - 1; i++)
-                        UniqueGrouping(i, check_list.size(), [&](std::vector<int>& indices) { multi_contain_test(map, indices); });
+                    if (check_list.size() > 2)
+                        for (int i = 2; i < check_list.size() - 1; i++)
+                            UniqueGrouping(i, check_list.size(), [&](std::vector<int>& indices) { multi_contain_test(map, indices); });
                     check_list.clear();
                 }
             }
@@ -201,16 +208,26 @@ void Solve(Sudoku& sudoku)
             {
                 auto map_x = std::bind(&Sudoku::MapLineX, &sudoku, j, std::placeholders::_1);
                 map_x(add_to_list);
-                for (int i = 2; i < check_list.size() - 1; i++)
-                    UniqueGrouping(i, check_list.size(), [&](std::vector<int>& indices) { multi_contain_test(map_x, indices); });
+                if (check_list.size() > 2)
+                    for (int i = 2; i < check_list.size() - 1; i++)
+                        UniqueGrouping(i, check_list.size(), [&](std::vector<int>& indices) { multi_contain_test(map_x, indices); });
                 check_list.clear();
 
                 auto map_y = std::bind(&Sudoku::MapLineY, &sudoku, j, std::placeholders::_1);
                 map_y(add_to_list);
-                for (int i = 2; i < check_list.size() - 1; i++)
-                    UniqueGrouping(i, check_list.size(), [&](std::vector<int>& indices) { multi_contain_test(map_y, indices); });
+                if (check_list.size() > 2)
+                    for (int i = 2; i < check_list.size() - 1; i++)
+                        UniqueGrouping(i, check_list.size(), [&](std::vector<int>& indices) { multi_contain_test(map_y, indices); });
                 check_list.clear();
             }
+
+            if (part_2) counter += 2;
         }
+
+        level += counter;
+        if (!counter)
+            running = false;
     }
+
+    std::cout << "Level: " << level << std::endl;
 }
