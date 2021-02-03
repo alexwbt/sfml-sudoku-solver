@@ -38,13 +38,13 @@ int main()
     {
         switch (event.key.code)
         {
-        case sf::Keyboard::Up:
+        case sf::Keyboard::Up: sudoku.MoveSelect(0, -1); break;
+        case sf::Keyboard::Left: sudoku.MoveSelect(-1, 0); break;
+        case sf::Keyboard::Down: sudoku.MoveSelect(0, 1); break;
+        case sf::Keyboard::Right: sudoku.MoveSelect(1, 0); break;
         case sf::Keyboard::W: sudoku.MoveSelect(0, -1); break;
-        case sf::Keyboard::Left:
         case sf::Keyboard::A: sudoku.MoveSelect(-1, 0); break;
-        case sf::Keyboard::Down:
         case sf::Keyboard::S: sudoku.MoveSelect(0, 1); break;
-        case sf::Keyboard::Right:
         case sf::Keyboard::D: sudoku.MoveSelect(1, 0); break;
         case sf::Keyboard::Num1: sudoku.SetSelect(1); break;
         case sf::Keyboard::Num2: sudoku.SetSelect(2); break;
